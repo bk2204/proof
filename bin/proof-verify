@@ -1,0 +1,8 @@
+#!/usr/bin/ruby
+
+$LOAD_PATH.unshift File.join(File.dirname(__FILE__), %w(.. lib))
+
+require 'proof-sig'
+require 'proof-sig/main'
+
+ProofSig::Program::Verify.new(ARGV).run

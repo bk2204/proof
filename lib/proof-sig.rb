@@ -1,3 +1,5 @@
 require 'proof-sig/data'
+require 'proof-sig/parser'
 require 'proof-sig/exception'
+require 'proof-sig/module/bsdhash'
 require 'proof-sig/module/gnusum'

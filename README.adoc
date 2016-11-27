@@ -1,0 +1,6 @@
+= Proof
+
+Proof is a library and set of command-line tools that is designed to verify
+files and other data.  It currently acts as a more capable version of sha256sum
+and company, but it is planned to add support to verify signatures as well as
+hashes.

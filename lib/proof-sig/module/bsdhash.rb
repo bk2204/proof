@@ -4,12 +4,17 @@ module ProofSig
   module Module
     # Parses BSD-style hash files, such as those produced with FreeBSD's sha256.
     class BSDHash < Parser
+      PATTERN = /\A(\w+) \(([^)]+)\) = ([a-f0-9]+)\z/
+
+      def self.detect(data)
+        data.chomp =~ PATTERN
+      end
+
       def parse(lines, options = {})
         s = ProofSig::Data::EntrySet.new
-        re = /\A(\w+) \(([^)]+)\) = ([a-f0-9]+)\z/
-        lines.each_line do |line|
+        lines.each do |line|
           line.chomp!
-          m = re.match line
+          m = PATTERN.match line
           if m
             s << ProofSig::Data::FileEntry.new(m[1], from_hex(m[3]), m[2])
           else
@@ -21,3 +26,6 @@ module ProofSig
     end
   end
 end
+
+ProofSig::Module::ParserRegistry.instance.add('bsdhash',
+                                              ProofSig::Module::BSDHash)

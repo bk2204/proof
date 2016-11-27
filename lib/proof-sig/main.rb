@@ -11,9 +11,9 @@ module ProofSig
       end
 
       def run
-        parser = ProofSig::Module::GNUSum.new
         entries = @args.flat_map do |file|
-          parser.parse(File.new(file, 'r'), @options)
+          p, lines = parser(file)
+          p.parse(lines, @options)
         end
         verifier = ProofSig::Module::Verifier.new(entries, nil, @options)
         verifier.verify do |e, match, options = {}|
@@ -22,6 +22,16 @@ module ProofSig
       end
 
       protected
+
+      def parser(file)
+        lines = File.new(file, 'r').each_line.to_a
+        reg = ProofSig::Module::ParserRegistry.instance
+        if @options[:chain]
+          [reg[@options[:chain]].new, lines]
+        else
+          [reg.detect_class(lines[0]).new, lines]
+        end
+      end
 
       def match_text(match, options)
         if match
@@ -44,6 +54,11 @@ module ProofSig
 
           opts.on('--ignore-malformed', 'Ignore malformed entries') do
             options[:ignore_malformed] = true
+          end
+
+          opts.on('--chain CHAIN', '-c CHAIN',
+                  'Process data using these parsers') do |chain|
+            options[:chain] = chain
           end
         end.parse!(args)
 

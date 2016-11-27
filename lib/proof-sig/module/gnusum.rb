@@ -15,13 +15,17 @@ module ProofSig
         96  => :sha384,
         128 => :sha512,
       }.freeze
+      PATTERN = /\A([a-f0-9]+) [ *](.+)\z/
+
+      def self.detect(data)
+        data.chomp =~ PATTERN
+      end
 
       def parse(lines, options = {})
         s = ProofSig::Data::EntrySet.new
-        re = /\A([a-f0-9]+) [ *](.+)\z/
-        lines.each_line do |line|
+        lines.each do |line|
           line.chomp!
-          m = re.match line
+          m = PATTERN.match line
           unless m
             raise InvalidEntryError, line unless options[:ignore_malformed]
             next
@@ -42,3 +46,6 @@ module ProofSig
     end
   end
 end
+
+ProofSig::Module::ParserRegistry.instance.add('gnusum',
+                                              ProofSig::Module::GNUSum)

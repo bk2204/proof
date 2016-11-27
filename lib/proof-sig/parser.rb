@@ -1,4 +1,5 @@
 require 'base64'
+require 'singleton'
 
 module ProofSig
   module Module
@@ -44,6 +45,60 @@ module ProofSig
             yield ent, nil, missing: true
           end
         end
+      end
+    end
+
+    # A registry of parser types.
+    class ParserRegistry
+      include Singleton
+      include Enumerable
+
+      # Adds the given class to the registry.
+      #
+      # @param name [String] name of the parser module
+      # @param klass [Class] class of the parser module to add
+      def add(name, klass)
+        @entries[name] = klass
+      end
+
+      # Detects the parser module to for the given data.
+      #
+      # @param line [String] at least the first line of the data to parse
+      # @param klass [Class] class of the parser module to add
+      def detect_class(line)
+        each do |_name, klass|
+          return klass if klass.detect(line)
+        end
+        nil
+      end
+
+      # Iterates over the items.
+      #
+      # @yield [name, klass]
+      # @yieldparam name [String] name of the parser module
+      # @yieldparam klass [Class] class of the parser module
+      def each
+        @entries.sort.each { |k, v| yield [k, v] }
+      end
+
+      # Indicates whether the named parser exists.
+      #
+      # @param name [String] name of the parser module
+      def include?(name)
+        @entries.include?(name)
+      end
+
+      # Finds a parser module by name.
+      #
+      # @param name [String] name of the parser module
+      def [](name)
+        @entries[name]
+      end
+
+      protected
+
+      def initialize
+        @entries = {}
       end
     end
   end

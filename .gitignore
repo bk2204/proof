@@ -2,5 +2,6 @@
 .yardoc/
 coverage/
 doc/
+tags
 tmp/
 Gemfile.lock

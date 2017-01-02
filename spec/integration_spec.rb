@@ -82,4 +82,25 @@ describe ProofSig::Program::Verify do
     expect { prog.run }.not_to raise_exception
     expect(io.string).to eq expected
   end
+
+  it 'should ignore missing entries when requested' do
+    h = File.new("#{@dir}/hashes", 'w')
+    h.print(<<-EOM.gsub(/^\s+/, ''))
+    e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  #{@dir}/a
+    ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad  #{@dir}/c
+    EOM
+    h.close
+
+    expected = <<-EOM.gsub(/^\s+/, '')
+    #{@dir}/a: OK
+    #{@dir}/c: MISSING
+    EOM
+
+    io = StringIO.new('', 'w')
+    prog = ProofSig::Program::Verify.new(['--ignore-missing',
+                                          '-c', 'gnusum',
+                                          "#{@dir}/hashes"], io)
+    expect { prog.run }.not_to raise_exception
+    expect(io.string).to eq expected
+  end
 end

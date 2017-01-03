@@ -103,4 +103,24 @@ describe ProofSig::Program::Verify do
     expect { prog.run }.not_to raise_exception
     expect(io.string).to eq expected
   end
+
+  it 'should mark mismatches as failed' do
+    h = File.new("#{@dir}/hashes", 'w')
+    h.print(<<-EOM.gsub(/^\s+/, ''))
+    e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  #{@dir}/a
+    0000000000000000000000000000000000000000000000000000000000000000  #{@dir}/b
+    EOM
+    h.close
+
+    expected = <<-EOM.gsub(/^\s+/, '')
+    #{@dir}/a: OK
+    #{@dir}/b: FAILED
+    EOM
+
+    io = StringIO.new('', 'w')
+    prog = ProofSig::Program::Verify.new(['-c', 'gnusum',
+                                          "#{@dir}/hashes"], io)
+    expect { prog.run }.not_to raise_exception
+    expect(io.string).to eq expected
+  end
 end

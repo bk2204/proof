@@ -60,6 +60,11 @@ module ProofSig
                   'Process data using these parsers') do |chain|
             options[:chain] = chain
           end
+
+          opts.on('--file FILE', '-f FILE',
+                  'Verify signature on this file') do |file|
+            options[:file] = file
+          end
         end.parse!(args)
 
         [options, args]

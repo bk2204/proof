@@ -5,14 +5,19 @@ module ProofSig
     # An entry representing a piece of data (e.g. a file) and its hash or
     # signature with a given algorithm (ans possibly key).
     class Entry
-      attr_reader :algorithm, :value
+      attr_reader :algorithm, :value, :authority
 
       # @param algo [String, Algorithm] the algorithm in question
       # @param value [String] the hash or signature as a binary string
       def initialize(algo, value)
-        @algorithm = algo.is_a?(Algorithm) ? algo : Algorithm.new(algo)
+        @algorithm = algo.is_a?(Algorithm) || !algo ? algo : Algorithm.new(algo)
         @value = value
         @match = nil
+        @authority = authority
+      end
+
+      def authority?(*args)
+        args.include? authority
       end
 
       # Computes whether the signature or hash matches.
@@ -44,6 +49,31 @@ module ProofSig
           dig << buf
         end
         dig.digest
+      end
+    end
+
+    # An Entry representing a file with a digital signature.
+    class SignatureFileEntry < FileEntry
+      def algorithm
+        cached_compute
+        @algorithm
+      end
+
+      def authority
+        cached_compute
+        @authority
+      end
+
+      def match?
+        cached_compute
+        @match
+      end
+
+      protected
+
+      def cached_compute
+        return if @computed
+        compute
       end
     end
 

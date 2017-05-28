@@ -28,7 +28,7 @@ describe ProofSig::Program::Verify do
 
     io = StringIO.new('', 'w')
     prog = ProofSig::Program::Verify.new(["#{@dir}/hashes"], io)
-    prog.run
+    expect(prog.run).to eq 0
     expect(io.string).to eq expected
   end
 
@@ -47,7 +47,7 @@ describe ProofSig::Program::Verify do
 
     io = StringIO.new('', 'w')
     prog = ProofSig::Program::Verify.new(["#{@dir}/hashes"], io)
-    prog.run
+    expect(prog.run).to eq 0
     expect(io.string).to eq expected
   end
 
@@ -60,7 +60,10 @@ describe ProofSig::Program::Verify do
 
     io = StringIO.new('', 'w')
     prog = ProofSig::Program::Verify.new(['-c', 'gnusum', "#{@dir}/hashes"], io)
-    expect { prog.run }.to raise_exception(ProofSig::InvalidEntryError)
+    errors = []
+    allow($stderr).to receive(:puts) { |msg| errors << msg }
+    expect(prog.run).to eq 2
+    expect(errors[0]).to match(/\AE: ProofSig::InvalidEntryError:/)
   end
 
   it 'should ignore malformed entries when requested' do
@@ -79,7 +82,7 @@ describe ProofSig::Program::Verify do
     prog = ProofSig::Program::Verify.new(['--ignore-malformed',
                                           '-c', 'gnusum',
                                           "#{@dir}/hashes"], io)
-    expect { prog.run }.not_to raise_exception
+    expect(prog.run).to eq 0
     expect(io.string).to eq expected
   end
 
@@ -100,7 +103,7 @@ describe ProofSig::Program::Verify do
     prog = ProofSig::Program::Verify.new(['--ignore-missing',
                                           '-c', 'gnusum',
                                           "#{@dir}/hashes"], io)
-    expect { prog.run }.not_to raise_exception
+    expect(prog.run).to eq 0
     expect(io.string).to eq expected
   end
 
@@ -120,7 +123,7 @@ describe ProofSig::Program::Verify do
     io = StringIO.new('', 'w')
     prog = ProofSig::Program::Verify.new(['-c', 'gnusum',
                                           "#{@dir}/hashes"], io)
-    expect { prog.run }.not_to raise_exception
+    expect(prog.run).to eq 1
     expect(io.string).to eq expected
   end
 end

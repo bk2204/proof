@@ -10,4 +10,8 @@ module ProofSig
   # Raised when the algorithm is unknown.
   class InvalidAlgorithmError < ProofSig::Exception
   end
+
+  # Raised when required data is missing.
+  class MissingDataError < ProofSig::Exception
+  end
 end

@@ -69,6 +69,9 @@ module ProofSig
       end
 
       def parse(lines, options = {})
+        unless options[:file]
+          raise ProofSig::MissingDataError, 'file is required for OpenPGP'
+        end
         s = ProofSig::Data::EntrySet.new
         sig = lines.to_a.join
         s << OpenPGPFileEntry.new(nil, sig, options[:file])

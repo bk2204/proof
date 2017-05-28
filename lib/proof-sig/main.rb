@@ -19,6 +19,10 @@ module ProofSig
         verifier.verify do |e, match, options = {}|
           @io.puts "#{e.filename}: #{match_text(match, options)}"
         end
+        verifier.success? ? 0 : 1
+      rescue StandardError => e
+        $stderr.puts "E: #{e.class}: #{e}"
+        2
       end
 
       protected

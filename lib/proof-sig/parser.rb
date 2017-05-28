@@ -36,15 +36,21 @@ module ProofSig
       #   nil if the entry was ignored
       # @yieldparam options [Hash} other metadata about the match
       def verify
+        @success = true
         @entries.each do |ent|
           begin
             match = ent.match?
+            @success &&= match
             yield ent, match
           rescue Errno::ENOENT
             raise unless @options[:ignore_missing]
             yield ent, nil, missing: true
           end
         end
+      end
+
+      def success?
+        @success
       end
     end
 

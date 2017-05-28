@@ -13,7 +13,6 @@ module ProofSig
         @algorithm = algo.is_a?(Algorithm) || !algo ? algo : Algorithm.new(algo)
         @value = value
         @match = nil
-        @authority = authority
       end
 
       def authority?(*args)
@@ -74,6 +73,7 @@ module ProofSig
       def cached_compute
         return if @computed
         compute
+        @computed = true
       end
     end
 

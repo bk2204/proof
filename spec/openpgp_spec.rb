@@ -3,6 +3,39 @@ require 'spec_helper'
 require 'stringio'
 
 describe ProofSig::Module::OpenPGP do
+  let(:fixtures) { File.join(File.dirname(__FILE__), 'fixtures') }
+
+  def signatures(s)
+    File.join(fixtures, 'signatures', s)
+  end
+
+  def signature_over(s)
+    p = ProofSig::Module::OpenPGP.new
+    sig = File.open(signatures('openpgp-good'), 'r')
+    tf = Tempfile.new('proof-rspec')
+    tf.write s
+    tf.flush
+    p.parse(sig.each_line, file: tf.path)
+  end
+
+  def with_gnupg
+    Dir.mktmpdir do |dir|
+      env = ENV.to_h
+      begin
+        # We have to set this because the real code spawns binaries.
+        ENV['GNUPGHOME'] = dir
+        pubkey_path = File.join(fixtures, %w[keys openpgp-public])
+        devnull = ['/dev/null', 'r+']
+        pid = Process.spawn('gpg', '--batch', '--import', pubkey_path,
+                            in: devnull, out: devnull, err: devnull)
+        Process.wait pid
+        yield dir
+      ensure
+        ENV.replace(env)
+      end
+    end
+  end
+
   it 'should process valid GnuPG output for good signatures' do
     allow(Open3).to receive(:capture3).and_return(<<-EOM.sub(/^\s+/, ''))
     [GNUPG:] NEWSIG
@@ -38,5 +71,26 @@ describe ProofSig::Module::OpenPGP do
     expect(output[0].algorithm).to be nil
     expect(output[0].match?).to be false
     expect(output[0].authority).to be nil
+  end
+
+  it 'should verify good signatures over data' do
+    with_gnupg do
+      output = signature_over("foo\n")
+      expect(output.length).to eq 1
+      expect(output[0].algorithm.to_s).to eq 'SHA-256'
+      expect(output[0].match?).to be true
+      expect(output[0].authority).to eq \
+        'A2A99A4490DBE0D9437733907E0008D9041506BD'
+    end
+  end
+
+  it 'should reject bad signatures over data' do
+    with_gnupg do
+      output = signature_over('bar')
+      expect(output.length).to eq 1
+      expect(output[0].algorithm).to be nil
+      expect(output[0].match?).to be false
+      expect(output[0].authority).to be nil
+    end
   end
 end

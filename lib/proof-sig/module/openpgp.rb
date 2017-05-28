@@ -1,3 +1,4 @@
+require 'proof-sig/data'
 require 'proof-sig/parser'
 require 'open3'
 require 'tempfile'

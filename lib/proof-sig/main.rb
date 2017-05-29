@@ -21,6 +21,7 @@ module ProofSig
         end
         verifier.success? ? 0 : 1
       rescue StandardError => e
+        raise if @options[:trace]
         $stderr.puts "E: #{e.class}: #{e}"
         2
       end
@@ -47,7 +48,7 @@ module ProofSig
         end
       end
 
-      def parse_args(args)
+      def parse_args(args) # rubocop:disable Metrics/MethodLength
         options = {}
         OptionParser.new do |opts|
           opts.banner = 'Usage: proof-verify [options] FILES...'
@@ -68,6 +69,10 @@ module ProofSig
           opts.on('--file FILE', '-f FILE',
                   'Verify signature on this file') do |file|
             options[:file] = file
+          end
+
+          opts.on('--trace', 'Print a traceback on error') do
+            options[:trace] = true
           end
         end.parse!(args)
 

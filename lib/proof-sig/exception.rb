@@ -14,4 +14,8 @@ module ProofSig
   # Raised when required data is missing.
   class MissingDataError < ProofSig::Exception
   end
+
+  # Raised when an unknown file type occurs.
+  class UnknownFileTypeError < ProofSig::Exception
+  end
 end

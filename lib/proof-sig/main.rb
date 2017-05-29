@@ -1,4 +1,5 @@
 require 'optparse'
+require 'proof-sig/exception'
 require 'proof-sig/parser'
 
 module ProofSig
@@ -31,11 +32,13 @@ module ProofSig
       def parser(file)
         lines = File.new(file, 'r').each_line.to_a
         reg = ProofSig::Module::ParserRegistry.instance
-        if @options[:chain]
-          [reg[@options[:chain]].new, lines]
-        else
-          [reg.detect_class(lines[0]).new, lines]
+        chain = @options[:chain]
+        klass = chain ? reg[chain] : reg.detect_class(lines[0])
+        unless klass
+          msg = chain ? "Unknown type #{chain}" : 'Could not detect file type'
+          raise UnknownFileTypeError, msg
         end
+        [klass.new, lines]
       end
 
       def match_text(match, options)

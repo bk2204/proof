@@ -12,17 +12,25 @@ module ProofSig
         protected
 
         def compute
+          tf = write_tempfile(value)
+          args = %w[gpg --status-fd=1 --verify] + [tf.path]
+          args << verification_filename if verification_filename
+          stdout, _stderr, _status = Open3.capture3(*args, binmode: true)
+          process_parsed_data(process_output(stdout))
+          nil
+        end
+
+        def write_tempfile(value)
           tf = Tempfile.new('proof-openpgp')
           tf.print value
           tf.flush
-          stdout, _stderr, _status = Open3.capture3('gpg', '--status-fd=1',
-                                                    '--verify', tf.path,
-                                                    filename, binmode: true)
-          data = process_output(stdout)
+          tf
+        end
+
+        def process_parsed_data(data)
           @match = data[:match]
           @algorithm = data[:algorithm]
           @authority = data[:authority]
-          nil
         end
 
         def process_output(stdout)
@@ -62,19 +70,48 @@ module ProofSig
         end
       end
 
-      PATTERN = /\A-----BEGIN PGP SIGNATURE-----\z/
+      # An Entry representing a detached signature over a data file.
+      class DetachedOpenPGPFileEntry < OpenPGPFileEntry
+        protected
+
+        def verification_filename
+          filename
+        end
+      end
+
+      # An Entry representing an inline signature over a data file.
+      class InlineOpenPGPFileEntry < OpenPGPFileEntry
+        protected
+
+        def verification_filename
+          nil
+        end
+      end
+
+      SIG_PATTERN = '-----BEGIN PGP SIGNATURE-----'.freeze
+      MSG_PATTERN = '-----BEGIN PGP SIGNED MESSAGE-----'.freeze
 
       def self.detect(data)
-        data.chomp =~ PATTERN
+        data = data.chomp
+        return :detached if data == SIG_PATTERN
+        return :inline if data == MSG_PATTERN
+        nil
       end
 
       def parse(lines, options = {})
-        unless options[:file]
-          raise ProofSig::MissingDataError, 'file is required for OpenPGP'
-        end
+        first = lines.first
+        type = self.class.detect(first)
+        sig = first + lines.to_a.join
         s = ProofSig::Data::EntrySet.new
-        sig = lines.to_a.join
-        s << OpenPGPFileEntry.new(nil, sig, options[:file])
+        s << if type == :detached
+               unless options[:file]
+                 raise ProofSig::MissingDataError,
+                       'file is required for OpenPGP detached signatures'
+               end
+               DetachedOpenPGPFileEntry.new(nil, sig, options[:file])
+             else
+               InlineOpenPGPFileEntry.new(nil, sig, options[:signature_file])
+             end
         s
       end
     end

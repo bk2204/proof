@@ -13,8 +13,9 @@ module ProofSig
 
       def run
         entries = @args.flat_map do |file|
+          options = @options.merge(signature_file: file)
           p, lines = parser(file)
-          p.parse(lines, @options)
+          p.parse(lines, options)
         end
         verifier = ProofSig::Module::Verifier.new(entries, nil, @options)
         verifier.verify do |e, match, options = {}|

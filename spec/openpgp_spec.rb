@@ -93,4 +93,29 @@ describe ProofSig::Module::OpenPGP do
       expect(output[0].authority).to be nil
     end
   end
+
+  it 'should verify good inline signatures' do
+    with_gnupg do
+      p = ProofSig::Module::OpenPGP.new
+      sig = File.open(signatures('openpgp-clearsign-good'), 'r')
+      output = p.parse(sig.each_line)
+      expect(output.length).to eq 1
+      expect(output[0].algorithm.to_s).to eq 'SHA-256'
+      expect(output[0].match?).to be true
+      expect(output[0].authority).to eq \
+        'A2A99A4490DBE0D9437733907E0008D9041506BD'
+    end
+  end
+
+  it 'should reject bad inline signatures' do
+    with_gnupg do
+      p = ProofSig::Module::OpenPGP.new
+      sig = File.open(signatures('openpgp-clearsign-bad'), 'r')
+      output = p.parse(sig.each_line)
+      expect(output.length).to eq 1
+      expect(output[0].algorithm).to be nil
+      expect(output[0].match?).to be false
+      expect(output[0].authority).to be nil
+    end
+  end
 end
